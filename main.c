@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+
 
 typedef enum I_TYPE {
     R_Type,
@@ -164,13 +166,24 @@ EXACT_INST decompose_rtype(const char *istring) {
     return ERR;
 }
 
-int substring_as_int(const char *str, int i, int j) {
+int substring_as_int(const char *str, int i, int j, bool little_endian) {
+    // Check that range is in bounds 
     if (i < 0 || j < i || j >= strlen(str)) {
         printf("Invalid range\n");
         return -1;  // Error case
     }
 
     int result = 0;
+
+    // Little endian
+    if (little_endian) {
+        int power = 0;
+        for (int k = i; k <= j; k++, power++) {
+            if (str[k] == '1') { result += 1 << power; }
+        }
+        return result;
+    }
+ 
     for (int k = i; k <= j; k++) {
         result = (result << 1) | (str[k] - '0');  // Shift left and add bit
     }
@@ -213,16 +226,20 @@ int main() {
     const char *filename = "a.txt";
     char *istring = get_istring(filename);
     if (istring) {
+
         printf("Istring: %s\n", istring);
         I_TYPE itype = populate_itype(istring);
+        
         char* its = itype_to_string(itype);
-        printf(its);
+        printf("%s\n", its);
         printf("\n");
+        
         EXACT_INST exact = decompose_rtype(istring);
         const char* itz = exact_inst_to_string(exact);
-        printf(itz);
-        int rs = substring_as_int(istring, 7, 12); // problem here
-        printf("%d\n", rs);
+        printf("Exact Inst: %s\n", itz);
+        
+        int rs = substring_as_int(istring, 7, 11, true); // problem here
+        printf("Rs: %d\n", rs);
         free(istring);
     }
     return 0;
