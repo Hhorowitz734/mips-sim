@@ -1,8 +1,9 @@
 #ifndef RINST
 #define RINST
 #include <stdio.h>
+#include "util.h"
 
-typedef enum EXACT_INST {
+typedef enum EXACT_INST_R {
     // Arithmetic Instructions
     ADD,
     ADDU,
@@ -33,14 +34,14 @@ typedef enum EXACT_INST {
     // Jump Instructions
     JR,
 
-    ERR
-} EXACT_INST;
+    ERR_R
+} EXACT_INST_R;
 
 
 typedef struct R_Instruction {
     char* istring;
     
-    EXACT_INST exact_instruction; 
+    EXACT_INST_R exact_instruction; 
 
     int rs;
     int rt;
@@ -51,7 +52,7 @@ typedef struct R_Instruction {
 } R_Instruction;
 
 
-const char* exact_inst_to_string(EXACT_INST inst) {
+const char* exact_inst_to_string(EXACT_INST_R inst) {
     switch (inst) {
         // Arithmetic Instructions
         case ADD: return "ADD";
@@ -84,12 +85,12 @@ const char* exact_inst_to_string(EXACT_INST inst) {
         case JR: return "JR";
 
         // Error / Unknown Instruction
-        case ERR:
-        default: return "ERR"; 
+        case ERR_R:
+        default: return "ERR_R"; 
     }
 }
 
-EXACT_INST funct_to_exact_inst(int funct) {
+EXACT_INST_R funct_to_exact_inst(int funct) {
     switch (funct) {
         case 32:
             return ADD;
@@ -120,36 +121,11 @@ EXACT_INST funct_to_exact_inst(int funct) {
         case 43:
             return SLTU;
         default:
-            return ERR;
+            return ERR_R;
     }
 }
 
-
-
-int substring_as_int(const char *str, int i, int j, bool little_endian) {
-    // Check that range is in bounds 
-    if (i < 0 || j < i || j >= strlen(str)) {
-        printf("Invalid range\n");
-        return -1;  // Error case
-    }
-
-    int result = 0;
-
-    // Little endian
-    if (little_endian) {
-        int power = 0;
-        for (int k = i; k <= j; k++, power++) {
-            if (str[k] == '1') { result += 1 << power; }
-        }
-        return result;
-    }
  
-    for (int k = i; k <= j; k++) {
-        result = (result << 1) | (str[k] - '0');  // Shift left and add bit
-    }
-
-    return result;
-}
 
 
 R_Instruction* populate_r_instruction(const char* istring) {
@@ -198,8 +174,8 @@ void write_rtype(const char* istring, const char* output_filename) {
     fprintf(outputfile, " ");   
     fprintf(outputfile, "$t%d", (inst->rt - 8)); 
 
+    fprintf(outputfile, "\n");    
 
-    
     fclose(outputfile);
     return;
 }

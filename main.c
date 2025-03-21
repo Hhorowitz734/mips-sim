@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include "rinst.h"
+#include "iinst.h"
+
 
 typedef enum I_TYPE {
     R_Type,
@@ -54,72 +56,54 @@ I_TYPE populate_itype(const char* istring) {
 
 }
 
-EXACT_INST decompose_rtype(const char *istring) {
-    // Extract funct (last 6 bytes)
-    if (strncmp(istring + 26, "100000", 6) == 0) return ADD;
-    if (strncmp(istring + 26, "100001", 6) == 0) return ADDU;
-    if (strncmp(istring + 26, "100010", 6) == 0) return SUB;
-    if (strncmp(istring + 26, "100011", 6) == 0) return SUBU;
-    if (strncmp(istring + 26, "011000", 6) == 0) return MULT;
-    if (strncmp(istring + 26, "011001", 6) == 0) return MULTU;
-    if (strncmp(istring + 26, "011010", 6) == 0) return DIV;
-    if (strncmp(istring + 26, "011011", 6) == 0) return DIVU;
-    if (strncmp(istring + 26, "100100", 6) == 0) return AND;
-    if (strncmp(istring + 26, "100101", 6) == 0) return OR;
-    if (strncmp(istring + 26, "100110", 6) == 0) return XOR;
-    if (strncmp(istring + 26, "100111", 6) == 0) return NOR;
-    if (strncmp(istring + 26, "000000", 6) == 0) return SLL;
-    if (strncmp(istring + 26, "000010", 6) == 0) return SRL;
-    if (strncmp(istring + 26, "000011", 6) == 0) return SRA;
-    if (strncmp(istring + 26, "101010", 6) == 0) return SLT;
-    if (strncmp(istring + 26, "101011", 6) == 0) return SLTU;
-    if (strncmp(istring + 26, "001000", 6) == 0) return JR;
 
-    // Default case: Unknown instruction
-    return ERR;
-}
-
-
-
-char* get_istring(const char *input_filename) {
-
-    // Open file
-    FILE *file = fopen(input_filename, "r");
-    if (file == NULL) {
-        perror("Could not open file");
-        return NULL;
-    }
-
-    // Allocate memory for string
+char* get_istring(FILE *file) {
     char* buffer = (char*)malloc(33 * sizeof(char));
     if (buffer == NULL) {
         perror("Memory allocation failed in get_istring()");
         return NULL;
     }
 
-    // Read out the buffer
     if (fgets(buffer, 33, file) == NULL) {
-        perror("Error reading file");
         free(buffer);
-        fclose(file);
+        return NULL;
+    }
+
+    size_t len = strlen(buffer);
+
+    // If exactly 32 chars were read and the next char is a newline, consume it
+    if (len == 32) {
+        int c = fgetc(file);
+        if (c != '\n' && c != EOF) {
+            ungetc(c, file);  // put back anything unexpected
+        }
+    }
+
+    if (len < 32) {
+        free(buffer);
         return NULL;
     }
 
     buffer[32] = '\0';
-    fclose(file);
     return buffer;
 }
-
-
 
 int main() {
     
     const char *input_filename = "a.txt";
     const char *output_filename = "output.txt";
 
+    FILE *file = fopen(input_filename, "r");
+    if (file == NULL) {
+        perror("Could not open file");
+        return 1;
+    }
 
-    char *istring = get_istring(input_filename);
-    if (istring) {
+    while (1) {
+        char *istring = get_istring(file);
+        if (istring == NULL) {
+            break;
+        }
 
         //printf("Istring: %s\n", istring);
         I_TYPE itype = populate_itype(istring);
@@ -129,14 +113,14 @@ int main() {
         //printf("\n");
         
         if (itype == R_Type) { 
-
             write_rtype(istring, output_filename);
         }
-
-
+        else if (itype == I_Type) {
+            write_itype(istring, output_filename);
+        }
         free(istring);
-
-
     }
+
+    fclose(file);
     return 0;
 }
