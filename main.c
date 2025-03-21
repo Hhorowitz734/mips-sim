@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-
+#include "rinst.h"
 
 typedef enum I_TYPE {
     R_Type,
@@ -10,93 +10,6 @@ typedef enum I_TYPE {
     J_Type,
     FP_Type // floating point
 } I_TYPE;
-
-typedef enum EXACT_INST {
-    // Arithmetic Instructions
-    ADD,
-    ADDU,
-    SUB,
-    SUBU,
-
-    // Multiplication & Division
-    MULT,
-    MULTU,
-    DIV,
-    DIVU,
-
-    // Logical Operations
-    AND,
-    OR,
-    XOR,
-    NOR,
-
-    // Shift Operations
-    SLL,
-    SRL,
-    SRA,
-
-    // Comparison Instructions
-    SLT,
-    SLTU,
-
-    // Jump Instructions
-    JR,
-
-    ERR
-} EXACT_INST;
-
-
-typedef struct R_Instruction {
-    char* istring;
-    I_TYPE type;
-
-    int rs;
-    int rt;
-    int rd;
-    int shamt;
-    int funct;
-
-} R_Instruction;
-
-
-const char* exact_inst_to_string(EXACT_INST inst) {
-    switch (inst) {
-        // Arithmetic Instructions
-        case ADD: return "ADD";
-        case ADDU: return "ADDU";
-        case SUB: return "SUB";
-        case SUBU: return "SUBU";
-
-        // Multiplication & Division
-        case MULT: return "MULT";
-        case MULTU: return "MULTU";
-        case DIV: return "DIV";
-        case DIVU: return "DIVU";
-
-        // Logical Operations
-        case AND: return "AND";
-        case OR: return "OR";
-        case XOR: return "XOR";
-        case NOR: return "NOR";
-
-        // Shift Operations
-        case SLL: return "SLL";
-        case SRL: return "SRL";
-        case SRA: return "SRA";
-
-        // Comparison Instructions
-        case SLT: return "SLT";
-        case SLTU: return "SLTU";
-
-        // Jump Instructions
-        case JR: return "JR";
-
-        // Error / Unknown Instruction
-        case ERR:
-        default: return "ERR"; 
-    }
-}
-
 
 char* itype_to_string(I_TYPE itype) {
     switch(itype) {
@@ -166,30 +79,6 @@ EXACT_INST decompose_rtype(const char *istring) {
     return ERR;
 }
 
-int substring_as_int(const char *str, int i, int j, bool little_endian) {
-    // Check that range is in bounds 
-    if (i < 0 || j < i || j >= strlen(str)) {
-        printf("Invalid range\n");
-        return -1;  // Error case
-    }
-
-    int result = 0;
-
-    // Little endian
-    if (little_endian) {
-        int power = 0;
-        for (int k = i; k <= j; k++, power++) {
-            if (str[k] == '1') { result += 1 << power; }
-        }
-        return result;
-    }
- 
-    for (int k = i; k <= j; k++) {
-        result = (result << 1) | (str[k] - '0');  // Shift left and add bit
-    }
-
-    return result;
-}
 
 
 char* get_istring(const char *filename) {
@@ -234,13 +123,13 @@ int main() {
         printf("%s\n", its);
         printf("\n");
         
-        EXACT_INST exact = decompose_rtype(istring);
-        const char* itz = exact_inst_to_string(exact);
-        printf("Exact Inst: %s\n", itz);
-        
-        int rs = substring_as_int(istring, 7, 11, true); // problem here
-        printf("Rs: %d\n", rs);
+        if (itype == R_Type) { 
+            populate_r_instruction(istring); }
+
+
         free(istring);
+
+
     }
     return 0;
 }
