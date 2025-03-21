@@ -163,18 +163,45 @@ R_Instruction* populate_r_instruction(const char* istring) {
     inst->funct = substring_as_int(istring, 26, 31, false);
     inst->exact_instruction = funct_to_exact_inst(inst->funct);
 
-    printf("Instruction: %s\n", exact_inst_to_string(inst->exact_instruction));
-    printf("rs: %d\n", inst->rs);
-    printf("rt: %d\n", inst->rt); 
-    printf("rd: %d\n", inst->rd); 
-    printf("shamt: %d\n", inst->shamt);
-    printf("funct: %d\n", inst->funct);
-
-
-    free(inst);
-    return NULL; // temporary
-
+    return inst;
 }
 
+void write_rtype(const char* istring, const char* output_filename) {
+
+    FILE *outputfile = fopen(output_filename, "a");
+    if (outputfile == NULL) {
+        perror("Error opening output file");
+        exit(0);
+    }
+    
+    // Write instruction split up
+    fwrite(istring, sizeof(char), 6, outputfile);  
+    fprintf(outputfile, " ");    
+    fwrite(istring + 6, sizeof(char), 5, outputfile);
+    fprintf(outputfile, " ");    
+    fwrite(istring + 11, sizeof(char), 5, outputfile);
+    fprintf(outputfile, " ");    
+    fwrite(istring + 16, sizeof(char), 5, outputfile);
+    fprintf(outputfile, " ");    
+    fwrite(istring + 21, sizeof(char), 5, outputfile);
+    fprintf(outputfile, " ");    
+    fwrite(istring + 26, sizeof(char), 5, outputfile);
+    fprintf(outputfile, "\t");    
+
+    // Decode + write decoded instruction
+    R_Instruction* inst = populate_r_instruction(istring);
+    fprintf(outputfile, "%s", exact_inst_to_string(inst->exact_instruction)); 
+    fprintf(outputfile, " ");   
+    fprintf(outputfile, "$t%d,", (inst->rd - 8));
+    fprintf(outputfile, " ");    
+    fprintf(outputfile, "$t%d,", (inst->rs - 8));
+    fprintf(outputfile, " ");   
+    fprintf(outputfile, "$t%d", (inst->rt - 8)); 
+
+
+    
+    fclose(outputfile);
+    return;
+}
 
 #endif

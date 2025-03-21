@@ -81,10 +81,10 @@ EXACT_INST decompose_rtype(const char *istring) {
 
 
 
-char* get_istring(const char *filename) {
+char* get_istring(const char *input_filename) {
 
     // Open file
-    FILE *file = fopen(filename, "r");
+    FILE *file = fopen(input_filename, "r");
     if (file == NULL) {
         perror("Could not open file");
         return NULL;
@@ -110,21 +110,28 @@ char* get_istring(const char *filename) {
     return buffer;
 }
 
+
+
 int main() {
     
-    const char *filename = "a.txt";
-    char *istring = get_istring(filename);
+    const char *input_filename = "a.txt";
+    const char *output_filename = "output.txt";
+
+
+    char *istring = get_istring(input_filename);
     if (istring) {
 
-        printf("Istring: %s\n", istring);
+        //printf("Istring: %s\n", istring);
         I_TYPE itype = populate_itype(istring);
         
         char* its = itype_to_string(itype);
-        printf("%s\n", its);
-        printf("\n");
+        //printf("%s\n", its);
+        //printf("\n");
         
         if (itype == R_Type) { 
-            populate_r_instruction(istring); }
+
+            write_rtype(istring, output_filename);
+        }
 
 
         free(istring);
