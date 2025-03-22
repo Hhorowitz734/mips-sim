@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include "rinst.h"
 #include "iinst.h"
-
+#include "jinst.h"
 
 typedef enum I_TYPE {
     R_Type,
@@ -29,10 +30,11 @@ char* itype_to_string(I_TYPE itype) {
 }
 
 I_TYPE populate_itype(const char* istring) {
-
+    
     // Check memory safety
     if (istring == NULL) {
         perror("populate_itype() could not read istring.");
+        exit(0);
     }
 
     // Check floating point opcode "010001"
@@ -46,15 +48,16 @@ I_TYPE populate_itype(const char* istring) {
     }
 
     // J Type
-    if ((strncmp(istring, "000010", 6) == 0) || (strncmp(istring, "000011", 6) == 0)) {
+    if (strncmp(istring, "000010", 6) == 0 || strncmp(istring, "000011", 6) == 0) {
         return J_Type;
     }
-
+    
     // All else I Type
     return I_Type;
 
 
 }
+
 
 
 char* get_istring(FILE *file) {
@@ -64,6 +67,20 @@ char* get_istring(FILE *file) {
         return NULL;
     }
 
+    // Skip leading whitespace
+    int ch;
+    do {
+        ch = fgetc(file);
+        if (ch == EOF) {
+            free(buffer);
+            return NULL;
+        }
+    } while (isspace(ch));
+
+    // Put back the first non-whitespace character
+    ungetc(ch, file);
+
+    // Now read exactly 32 chars
     if (fgets(buffer, 33, file) == NULL) {
         free(buffer);
         return NULL;
@@ -71,11 +88,11 @@ char* get_istring(FILE *file) {
 
     size_t len = strlen(buffer);
 
-    // If exactly 32 chars were read and the next char is a newline, consume it
+    // If exactly 32 chars read and next char is a newline, consume it
     if (len == 32) {
         int c = fgetc(file);
         if (c != '\n' && c != EOF) {
-            ungetc(c, file);  // put back anything unexpected
+            ungetc(c, file);
         }
     }
 
@@ -87,7 +104,6 @@ char* get_istring(FILE *file) {
     buffer[32] = '\0';
     return buffer;
 }
-
 int main() {
     
     const char *input_filename = "a.txt";
@@ -117,6 +133,9 @@ int main() {
         }
         else if (itype == I_Type) {
             write_itype(istring, output_filename);
+        }
+        else if (itype == J_Type) {
+            write_jtype(istring, output_filename);
         }
         free(istring);
     }
